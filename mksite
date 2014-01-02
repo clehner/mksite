@@ -1,3 +1,5 @@
+#!/usr/bin/make -f
+
 mds := $(patsubst %.md,%.html,$(wildcard *.md))
 contents := $(patsubst %.content.html,%.html,$(wildcard *.content.html))
 

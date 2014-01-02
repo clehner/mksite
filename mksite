@@ -9,7 +9,7 @@ all: $(mds) $(contents)
 	md2html.awk $< > $@
 
 %.html: %.content.html _template_nav.html
-	sed _template_nav.html > $@\
+	sed > $@ _template_nav.html\
 		-e 's/{title}/$*/g'\
 		-e '/{content}/r $<'\
 		-e '/{content}/d'

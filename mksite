@@ -8,18 +8,19 @@ all: $(mds) $(contents)
 %.content.html: %.md
 	@md2html.awk $< > $@
 
-%.html: %.content.html _template_nav.html
+%.html: %.content.html %.nav.html _template.html
 	@echo rendering $@
-	@sed > $@ _template_nav.html\
+	@sed > $@ _template.html\
 		-e 's/{title}/$*/g'\
-		-e '/{content}/r $<'\
-		-e '/{content}/d'
+		-e '/{content}/r $*.content.html'\
+		-e '/{content}/d'\
+		-e '/{link}/r $*.nav.html'\
+		-e '/{link}/d'
 
-_template_nav.html: _template.html _nav.html
-	@echo rendering template
+%.nav.html: _nav.html
+	@echo rendering nav for $*
 	@sed $< > $@\
-		-e '/{link}/r _nav.html'\
-		-e '/{link}/d'\
+		-e 's/href="$*.html"/\0 class="active"/'
 
 _nav.html: _nav _template.html
 	@echo rendering nav
@@ -30,5 +31,4 @@ _nav:
 	@ls | sed -n 's/^\(.*\)\.\(md\|content\.html\)$$/\1/p' > $@
 
 clean:
-	@echo cleaning
-	@rm -f _nav _nav.html _template_nav.html $(mds) $(contents)
+	rm -f _nav _nav.html *.nav.html $(mds) $(contents)

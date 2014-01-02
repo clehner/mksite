@@ -21,7 +21,7 @@ _template_nav.html: _template.html _nav.html
 		-e '/{link}/r _nav.html'\
 		-e '/{link}/d'\
 
-_nav.html: _nav
+_nav.html: _nav _template.html
 	@echo rendering nav
 	@sed -n 's/.*/$(shell sed -ne 's/\//\\\//g' -e 's/{link}/\\0/pg' _template.html)/pg' _nav > $@
 

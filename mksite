@@ -26,9 +26,13 @@ _nav.html: _nav _template.html
 	@echo rendering nav
 	@sed -n 's/.*/$(shell sed -ne 's/\//\\\//g' -e 's/{link}/\\0/pg' _template.html)/pg' _nav > $@
 
-_nav:
-	@echo listing files
-	@ls | sed -n 's/^\(.*\)\.\(md\|content\.html\)$$/\1/p' > $@
+_nav: .FORCE
+	@ls | sed -n 's/^\(.*\)\.\(md\|content\.html\)$$/\1/p' > $@.tmp
+	@cmp -s $@ $@.tmp || mv $@.tmp $@
+	@rm -f $@.tmp
 
 clean:
 	rm -f _nav _nav.html *.nav.html $(mds) $(contents)
+
+.FORCE:
+.PHONY: .FORCE clean

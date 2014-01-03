@@ -2,11 +2,12 @@
 
 mds := $(patsubst %.md,%.html,$(wildcard *.md))
 contents := $(patsubst %.content.html,%.html,$(wildcard *.content.html))
+md2html := md2html.awk
 
 all: $(mds) $(contents)
 
 %.content.html: %.md
-	@md2html.awk $< > $@
+	@$(md2html) $< > $@
 
 %.html: %.content.html %.nav.html _template.html
 	@echo rendering $@

@@ -1,11 +1,12 @@
 # For making the example site
 #include $(shell which mksite)
+
 include mksite
 
 # For installing mksite:
 
 bin = mksite
-md2html = md2html.awk
+md2html = ./md2html.awk
 
 # paths
 PREFIX = /usr/local

@@ -5,6 +5,8 @@ include mksite
 
 md2html = ./md2html.awk
 
+index_name = About
+
 deploy: all
 	rsync -avz . me@example.org:/srv/www/
 
@@ -30,4 +32,4 @@ uninstall:
 	rm -f ${P}/bin/mksite
 	rm -f ${P}/bin/md2html.awk
 
-.PHONY: install uninstall
+.PHONY: install uninstall link

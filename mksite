@@ -4,6 +4,8 @@ mds := $(patsubst %.md,%.html,$(wildcard *.md))
 contents := $(patsubst %.content.html,%.html,$(wildcard *.content.html))
 md2html := md2html.awk
 
+index_name := about
+
 all: $(mds) $(contents)
 
 %.content.html: %.md
@@ -13,22 +15,31 @@ all: $(mds) $(contents)
 	@echo rendering $@
 	@sed > $@ _template.html\
 		-e 's/{title}/$*/g'\
-		-e '/{content}/r $*.content.html'\
+		-e '/{content}/r $<'\
 		-e '/{content}/d'\
-		-e '/{link}/r $*.nav.html'\
-		-e '/{link}/d'
+		-e '/{nav}/r $*.nav.html'\
+		-e '/{nav}/,/{\/nav}/d'
 
 %.nav.html: _nav.html
-	@echo rendering nav for $*
-	@sed $< > $@\
-		-e 's/href="$*.html"/\0 class="active"/'
+	@sed 's/href="$*.html"/\0 class="active"/' $< > $@\
 
-_nav.html: _nav _template.html
+index.nav.html: _nav.html
+	@sed 's/href="."/\0 class="active"/' $< > $@
+
+getnavline := $(shell sed -n\
+			'/{nav}/{ :loop; n; /{\/nav}/q; s/\//\\\//g; s/{name}/\\2/g; s/{link}/\\1/g; p; b loop; }'\
+			 _template.html)
+
+_nav.html: _nav.txt _template.html
 	@echo rendering nav
-	@sed -n 's/.*/$(shell sed -ne 's/\//\\\//g' -e 's/{link}/\\0/pg' _template.html)/pg' _nav > $@
+	@sed -n 's/^\(.*\) \(.*\)$$/$(call getnavline)/pg' _nav.txt > $@
+
+_nav.txt: _nav
+	@sed 's/.*/\0.html \0/; s/.*index$$/. $(index_name)/'\
+		$< | sort > $@
 
 _nav: .FORCE
-	@ls | sed -n 's/^\(.*\)\.\(md\|content\.html\)$$/\1/p' > $@.tmp
+	@ls | sed -n 's/^\(.*\)\.\(md\|content\.html\)$$/\1/p' | uniq > $@.tmp
 	@cmp -s $@ $@.tmp || mv $@.tmp $@
 	@rm -f $@.tmp
 

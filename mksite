@@ -38,8 +38,12 @@ _nav.txt: _nav
 	@sed 's/.*/\0.html \0/; s/.*index$$/. $(index_name)/'\
 		$< | sort > $@
 
-_nav: .FORCE
-	@ls | sed -n 's/^\(.*\)\.\(md\|content\.html\)$$/\1/p' | uniq > $@.tmp
+_hidden:
+	@echo creating $@
+	@touch $@
+
+_nav: _hidden .FORCE
+	@ls | grep -vf _hidden | sed -n 's/^\(.*\)\.\(md\|content\.html\)$$/\1/p' | uniq > $@.tmp
 	@cmp -s $@ $@.tmp || mv $@.tmp $@
 	@rm -f $@.tmp
 

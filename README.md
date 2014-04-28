@@ -25,6 +25,8 @@ In your site directory, create a `_template.html`.
 
 To make a page, create a `.md` Markdown file or `.content.html` HTML file.
 
+To hide files from navigation, add them to a file called `_hidden`.
+
 To build your site, run `mksite`.
 
 ### More advanced usage

@@ -2,9 +2,9 @@
 
 mds := $(patsubst %.md,%.html,$(wildcard *.md))
 contents := $(patsubst %.content.html,%.html,$(wildcard *.content.html))
-md2html := md2html.awk
+titles := $(patsubst %.content.html,%.title,$(wildcard *.content.html))
 
-index_name := about
+md2html := md2html.awk
 
 # sync (1) to (2).
 # append to (1) things in (2) that it is missing
@@ -19,15 +19,20 @@ syncfiles = if [ ! -e $(1) ]; then\
 				mv -f $(3) $(1);\
 			fi
 
+get_html_title = sed -n '32q; s/^.*<[Hh][1-6]> *\([^<]*\)<.*$$/\1/p' $(1)
+
 all: $(mds) $(contents)
 
 %.content.html: %.md
 	@$(md2html) $< > $@
 
-%.html: %.content.html %.nav.html _template.html
+%.title: %.content.html
+	@$(call get_html_title,$<) > $@
+
+%.html: %.content.html %.nav.html %.title _template.html
 	@echo rendering $@
 	@sed > $@ _template.html\
-		-e 's/{title}/$*/g'\
+		-e 's/{title}/$(shell cat $*.title)/g'\
 		-e '/{content}/r $<'\
 		-e '/{content}/d'\
 		-e '/{nav}/r $*.nav.html'\
@@ -45,11 +50,20 @@ getnavline := $(shell sed -n\
 
 _nav.html: _nav.txt _template.html
 	@echo rendering nav
-	@sed -n 's/^\(.*\) \(.*\)$$/$(call getnavline)/pg' _nav.txt > $@
+	@sed -n 's/^\([^ ]*\) \(.*\)$$/$(call getnavline)/pg' _nav.txt > $@
 
-_nav.txt: _nav
-	@sed 's/.*/\0.html \0/; s/.*index$$/. $(index_name)/'\
-		$< > $@
+_nav.txt: _nav $(titles)
+	@awk '{\
+		page = $$0;\
+		title = page;\
+		getline title < (page ".title");\
+		if (page == "index") {\
+			page = ".";\
+		} else {\
+			page = page ".html";\
+		}\
+		print page " " title;\
+	}' $< > $@
 
 _hidden:
 	@echo creating $@
@@ -61,7 +75,7 @@ _nav: _hidden .FORCE
 	@rm -f $@.tmp
 
 clean:
-	rm -f _nav _nav.html *.nav.html $(mds) $(contents)
+	rm -f _nav _nav.html *.nav.html $(mds) $(contents) $(titles)
 
 .FORCE:
 .PHONY: .FORCE clean

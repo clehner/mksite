@@ -6,6 +6,19 @@ md2html := md2html.awk
 
 index_name := about
 
+# sync (1) to (2).
+# append to (1) things in (2) that it is missing
+# remove from (1) things it has that are not in (2)
+# use (3) as a temp file
+# assume (2) is already sorted
+syncfiles = if [ ! -e $(1) ]; then\
+				cp $(2) $(1);\
+			elif ! sort $(1) | cmp -s $(2); then\
+				grep -Ff $(2) $(1) > $(3);\
+				grep -vFf $(1) $(2) >> $(3);\
+				mv -f $(3) $(1);\
+			fi
+
 all: $(mds) $(contents)
 
 %.content.html: %.md
@@ -36,7 +49,7 @@ _nav.html: _nav.txt _template.html
 
 _nav.txt: _nav
 	@sed 's/.*/\0.html \0/; s/.*index$$/. $(index_name)/'\
-		$< | sort > $@
+		$< > $@
 
 _hidden:
 	@echo creating $@
@@ -44,7 +57,7 @@ _hidden:
 
 _nav: _hidden .FORCE
 	@ls | grep -vf _hidden | sed -n 's/^\(.*\)\.\(md\|content\.html\)$$/\1/p' | uniq > $@.tmp
-	@cmp -s $@ $@.tmp || mv $@.tmp $@
+	@$(call syncfiles,$@,$@.tmp,$@.tmp2)
 	@rm -f $@.tmp
 
 clean:

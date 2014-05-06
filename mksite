@@ -5,6 +5,7 @@ contents := $(patsubst %.content.html,%.html,$(wildcard *.content.html))
 titles := $(patsubst %.content.html,%.title,$(wildcard *.content.html))
 
 md2html := md2html.awk
+use_html_extension := 1
 
 # sync (1) to (2).
 # append to (1) things in (2) that it is missing
@@ -59,7 +60,7 @@ _nav.txt: _nav $(titles)
 		getline title < (page ".title");\
 		if (page == "index") {\
 			page = ".";\
-		} else {\
+		} else if ($(use_html_extension)) {\
 			page = page ".html";\
 		}\
 		print page " " title;\

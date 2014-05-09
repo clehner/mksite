@@ -5,45 +5,32 @@ contents := $(patsubst %.content.html,%.html,$(wildcard *.content.html))
 titles := $(patsubst %.content.html,%.title,$(wildcard *.content.html))
 
 md2html := md2html.awk
-use_html_extension := 1
 
-# sync (1) to (2).
-# append to (1) things in (2) that it is missing
-# remove from (1) things it has that are not in (2)
-# use (3) as a temp file
-# assume (2) is already sorted
-syncfiles = if [ ! -e $(1) ]; then\
-				cp $(2) $(1);\
-			elif ! sort $(1) | cmp -s $(2); then\
-				grep -Ff $(2) $(1) > $(3);\
-				grep -vFf $(1) $(2) >> $(3);\
-				mv -f $(3) $(1);\
-			fi
-
-get_html_title = sed -n '32q; s/^.*<[Hh][1-6]> *\([^<]*\)<.*$$/\1/p' $(1)
+index := index\(\.html\)\?
 
 all: $(mds) $(contents)
+
+%.title: _nav.txt
+	@sed $< > $@ -n\
+		-e '/^$*/{ s/^$*\S*\s*\(.*\)$$/\1/; s/\//\\\//g; p; }'\
+		-e 's/^$(index)/./'
 
 %.content.html: %.md
 	@$(md2html) $< > $@
 
-%.title: %.content.html
-	@$(call get_html_title,$<) > $@
-
-%.html: %.content.html %.nav.html %.title _template.html
+%.html: _template.html %.content.html %.nav.html %.title
 	@echo rendering $@
-	@sed > $@ _template.html\
+	@sed $< > $@ \
 		-e 's/{title}/$(shell cat $*.title)/g'\
-		-e '/{content}/r $<'\
+		-e '/{content}/r $*.content.html'\
 		-e '/{content}/d'\
 		-e '/{nav}/r $*.nav.html'\
 		-e '/{nav}/,/{\/nav}/d'
 
 %.nav.html: _nav.html
-	@sed 's/href="$*.html"/\0 class="active"/' $< > $@\
-
-index.nav.html: _nav.html
-	@sed 's/href="."/\0 class="active"/' $< > $@
+	@sed $< > $@ \
+		-e 's/href="$*\(\.html\)\?"/\0 class="active"/'\
+		-e 's/"$(index)"/"."/'
 
 getnavline := $(shell sed -n\
 			'/{nav}/{ :loop; n; /{\/nav}/q; s/\//\\\//g; s/{name}/\\2/g; s/{link}/\\1/g; p; b loop; }'\
@@ -53,30 +40,8 @@ _nav.html: _nav.txt _template.html
 	@echo rendering nav
 	@sed -n 's/^\([^ ]*\) \(.*\)$$/$(call getnavline)/pg' _nav.txt > $@
 
-_nav.txt: _nav $(titles)
-	@awk '{\
-		page = $$0;\
-		title = page;\
-		getline title < (page ".title");\
-		if (page == "index") {\
-			page = ".";\
-		} else if ($(use_html_extension)) {\
-			page = page ".html";\
-		}\
-		print page " " title;\
-	}' $< > $@
-
-_hidden:
-	@echo creating $@
-	@touch $@
-
-_nav: _hidden .FORCE
-	@ls | grep -vf _hidden | sed -n 's/^\(.*\)\.\(md\|content\.html\)$$/\1/p' | uniq > $@.tmp
-	@$(call syncfiles,$@,$@.tmp,$@.tmp2)
-	@rm -f $@.tmp
-
 clean:
-	rm -f _nav _nav.html *.nav.html $(mds) $(contents) $(titles)
+	rm -f _nav.html *.nav.html $(mds) $(contents) $(titles)
 
 .FORCE:
 .PHONY: .FORCE clean

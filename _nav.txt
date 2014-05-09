@@ -1,0 +1,4 @@
+index.html index
+LICENSE.html License
+README.html Readme
+thingies.html Thingies

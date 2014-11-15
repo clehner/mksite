@@ -9,7 +9,7 @@ Static site builder based on a makefile.
 
 ## Get it
 
-	git clone https://celehner.com/git/mksite
+	git clone git://celehner.com/mksite
 
 ## Installation
 

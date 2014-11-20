@@ -11,8 +11,9 @@ get_navline = $(shell sed < _template.html -n\
 	'/{nav}/{ :loop; n; /{\/nav}/q; s/\//\\\//g; s/{name}/\\2/g; s/{link}/\\1/g; p; b loop; }')
 
 get_title = $(shell sed < _nav.txt -n\
-		-e '/^$(1)/{ s/^$(1)\S*\s*\(.*\)$$/\1/; s/\//\\\//g; p; }'\
-		-e 's/^$(index)/./')
+		-e 's/^\/ /index /'\
+		-e 's/^\///'\
+		-e '/^$(1)/{ s/^$(1)\S*\s*\(.*\)$$/\1/; s/\//\\\//g; p; }')
 
 all: $(mds) $(contents)
 

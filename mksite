@@ -8,12 +8,13 @@ md2html := md2html.awk
 index := index\(\.html\)\?
 
 get_navline = $(shell sed < _template.html -n\
-	'/{nav}/{ :loop; n; /{\/nav}/q; s/\//\\\//g; s/{name}/\\2/g; s/{link}/\\1/g; p; b loop; }')
+	-e '/{nav}/!bend' -e ':loop' -e 'n; /{\/nav}/q'\
+	-e 's/\//\\\//g; s/{name}/\\2/g; s/{link}/\\1/g; p; b loop' -e ':end')
 
-get_title = $(shell sed < _nav.txt -n\
+get_title = $(shell sed < _nav.txt\
 		-e 's/^\/ /index /'\
 		-e 's/^\///'\
-		-e '/^$(1)/{ s/^$(1)\S*\s*\(.*\)$$/\1/; s/\//\\\//g; p; }')
+		-e '/^$(1)/!d; s/^[^ ]* //; s/\//\\\//g')
 
 all: $(mds) $(contents)
 
@@ -22,7 +23,7 @@ all: $(mds) $(contents)
 
 %.html: _template.html %.content.html %.nav.html
 	@echo rendering $@
-	@sed $< > $@ \
+	@sed <$< >$@ \
 		-e 's/{title}/$(call get_title,$*)/g'\
 		-e '/{content}/r $*.content.html'\
 		-e '/{content}/d'\
@@ -30,13 +31,13 @@ all: $(mds) $(contents)
 		-e '/{nav}/,/{\/nav}/d'
 
 %.nav.html: _nav.html
-	@sed $< > $@ \
+	@sed <$< >$@ \
 		-e 's/href="$*\(\.html\)\?"/\0 class="active"/'\
 		-e 's/"$(index)"/"."/'
 
 _nav.html: _nav.txt _template.html
 	@echo rendering nav
-	@sed -n 's/^\([^ ]*\) \(.*\)$$/$(call get_navline)/pg' _nav.txt > $@
+	@sed '/^$$/d; s/^\([^ ]*\) \(.*\)$$/$(call get_navline)/g' _nav.txt > $@
 
 clean:
 	rm -f _nav.html *.nav.html $(mds) $(contents)
